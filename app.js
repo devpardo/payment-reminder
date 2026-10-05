@@ -1,11 +1,21 @@
 const API_URL =
   "https://script.google.com/macros/s/AKfycbxPFfW48EAJ8cfJBD5dt1-58FO3mwSctJccvYPRPNlNPfKTTDNokFFKpmTm7qouB45Irg/exec";
 
-const paymentList = document.getElementById("paymentList");
-const totalAmount = document.getElementById("totalAmount");
-const paymentCount = document.getElementById("paymentCount");
-const currentDate = document.getElementById("currentDate");
-const refreshButton = document.getElementById("refreshButton");
+const paymentList =
+  document.getElementById("paymentList");
+
+const totalAmount =
+  document.getElementById("totalAmount");
+
+const paymentCount =
+  document.getElementById("paymentCount");
+
+const currentDate =
+  document.getElementById("currentDate");
+
+const refreshButton =
+  document.getElementById("refreshButton");
+
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat("en-PH", {
@@ -14,12 +24,16 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
+
 function renderPayments(data) {
-  totalAmount.textContent = formatCurrency(data.total);
+  totalAmount.textContent =
+    formatCurrency(data.total);
 
   paymentCount.textContent =
     `${data.payments.length} payment${
-      data.payments.length !== 1 ? "s" : ""
+      data.payments.length !== 1
+        ? "s"
+        : ""
     }`;
 
   if (data.payments.length === 0) {
@@ -32,40 +46,44 @@ function renderPayments(data) {
     return;
   }
 
-  paymentList.innerHTML = data.payments
-    .map(
-      (payment) => `
-        <article class="payment-card">
-          <div>
-            <div class="payment-source">
-              ${payment.source}
+  paymentList.innerHTML =
+    data.payments
+      .map(
+        (payment) => `
+          <article class="payment-card">
+
+            <div>
+              <div class="payment-source">
+                ${payment.source}
+              </div>
+
+              <div
+                class="payment-paid ${
+                  payment.paid === "Yes"
+                    ? "paid"
+                    : "unpaid"
+                }"
+              >
+                ${
+                  payment.paid === "Yes"
+                    ? "Paid"
+                    : "Not Paid"
+                }
+              </div>
             </div>
 
-            <div
-              class="payment-paid ${
-                payment.paid === "Yes"
-                  ? "paid"
-                  : "unpaid"
-              }"
-            >
-              ${
-                payment.paid === "Yes"
-                  ? "Paid"
-                  : "Not Paid"
-              }
+            <div class="payment-amount">
+              ${formatCurrency(payment.amount)}
             </div>
-          </div>
 
-          <div class="payment-amount">
-            ${formatCurrency(payment.amount)}
-          </div>
-        </article>
-      `
-    )
-    .join("");
+          </article>
+        `
+      )
+      .join("");
 }
 
-async function loadPayments() {
+
+function loadPayments() {
   paymentList.innerHTML = `
     <div class="loading">
       Loading payments...
@@ -74,52 +92,79 @@ async function loadPayments() {
 
   refreshButton.disabled = true;
 
-  try {
-    const response = await fetch(API_URL);
+  const callbackName =
+    `googleSheetsCallback_${Date.now()}`;
 
-    if (!response.ok) {
-      throw new Error(
-        `HTTP error: ${response.status}`
+  const script =
+    document.createElement("script");
+
+  window[callbackName] = (data) => {
+    try {
+      console.log(
+        "Google Sheets response:",
+        data
       );
-    }
 
-    const data = await response.json();
-
-    console.log("Google Sheets response:", data);
-
-    if (!data.success) {
-      throw new Error(
-        data.error ||
+      if (!data.success) {
+        throw new Error(
+          data.error ||
           "Unable to load payments."
+        );
+      }
+
+      renderPayments(data);
+
+    } catch (error) {
+      console.error(
+        "Failed to load payments:",
+        error
       );
+
+      paymentList.innerHTML = `
+        <div class="error">
+          <strong>
+            Unable to load payments.
+          </strong>
+
+          <br />
+
+          <small>
+            ${error.message}
+          </small>
+        </div>
+      `;
+
+    } finally {
+      delete window[callbackName];
+
+      script.remove();
+
+      refreshButton.disabled = false;
     }
+  };
 
-    renderPayments(data);
+  script.src =
+    `${API_URL}?callback=${callbackName}`;
 
-  } catch (error) {
-    console.error(
-      "Failed to load payments:",
-      error
-    );
+  script.onerror = () => {
+    delete window[callbackName];
+
+    script.remove();
+
+    refreshButton.disabled = false;
 
     paymentList.innerHTML = `
       <div class="error">
         <strong>
-          Unable to load payments.
+          Unable to connect to Google Sheets.
         </strong>
-
-        <br />
-
-        <small>
-          ${error.message}
-        </small>
       </div>
     `;
+  };
 
-  } finally {
-    refreshButton.disabled = false;
-  }
+  document.body.appendChild(script);
 }
+
 
 function renderCurrentDate() {
   currentDate.textContent =
@@ -128,10 +173,12 @@ function renderCurrentDate() {
     }).format(new Date());
 }
 
+
 refreshButton.addEventListener(
   "click",
   loadPayments
 );
+
 
 renderCurrentDate();
 loadPayments();
