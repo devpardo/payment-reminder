@@ -57,38 +57,55 @@ function renderPayments(data) {
     .join("");
 }
 
-async function loadPayments() {
+function loadPayments() {
   paymentList.innerHTML = `
     <div class="loading">
       Loading payments...
     </div>
   `;
 
-  try {
-    const response = await fetch(API_URL);
+  const callbackName = `googleSheetsCallback_${Date.now()}`;
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+  window[callbackName] = (data) => {
+    try {
+      if (!data.success) {
+        throw new Error(data.error || "Unable to load payments.");
+      }
+
+      renderPayments(data);
+    } catch (error) {
+      console.error("Failed to load payments:", error);
+
+      paymentList.innerHTML = `
+        <div class="error">
+          Unable to load payments.
+          <br />
+          <small>${error.message}</small>
+        </div>
+      `;
+    } finally {
+      delete window[callbackName];
+      script.remove();
     }
+  };
 
-    const data = await response.json();
+  const script = document.createElement("script");
 
-    if (!data.success) {
-      throw new Error(data.error || "Unable to load payments.");
-    }
+  script.src =
+    `${API_URL}?callback=${callbackName}`;
 
-    renderPayments(data);
-  } catch (error) {
-    console.error("Failed to load payments:", error);
+  script.onerror = () => {
+    delete window[callbackName];
+    script.remove();
 
     paymentList.innerHTML = `
       <div class="error">
-        Unable to load payments.
-        <br />
-        <small>${error.message}</small>
+        Unable to connect to Google Sheets.
       </div>
     `;
-  }
+  };
+
+  document.body.appendChild(script);
 }
 
 function renderCurrentDate() {
