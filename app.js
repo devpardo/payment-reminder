@@ -66,15 +66,22 @@ function loadPayments() {
 
   const callbackName = `googleSheetsCallback_${Date.now()}`;
 
+  const script = document.createElement("script");
+
   window[callbackName] = (data) => {
     try {
       if (!data.success) {
-        throw new Error(data.error || "Unable to load payments.");
+        throw new Error(
+          data.error || "Unable to load payments."
+        );
       }
 
       renderPayments(data);
     } catch (error) {
-      console.error("Failed to load payments:", error);
+      console.error(
+        "Failed to load payments:",
+        error
+      );
 
       paymentList.innerHTML = `
         <div class="error">
@@ -88,8 +95,6 @@ function loadPayments() {
       script.remove();
     }
   };
-
-  const script = document.createElement("script");
 
   script.src =
     `${API_URL}?callback=${callbackName}`;
@@ -109,12 +114,16 @@ function loadPayments() {
 }
 
 function renderCurrentDate() {
-  currentDate.textContent = new Intl.DateTimeFormat("en-PH", {
-    dateStyle: "full",
-  }).format(new Date());
+  currentDate.textContent =
+    new Intl.DateTimeFormat("en-PH", {
+      dateStyle: "full",
+    }).format(new Date());
 }
 
-refreshButton.addEventListener("click", loadPayments);
+refreshButton.addEventListener(
+  "click",
+  loadPayments
+);
 
 renderCurrentDate();
 loadPayments();
