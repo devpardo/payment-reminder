@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Payment Reminder</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="container">
+    <header class="header">
+      <div>
+        <h1>Payment Reminder</h1>
+        <p id="currentDate"></p>
+      </div>
+
+      <button id="refreshButton" type="button">
+        Refresh
+      </button>
+    </header>
+
+    <section class="summary">
+      <div class="summary-card">
+        <span class="summary-label">Payable This Week</span>
+        <strong id="totalAmount">₱0.00</strong>
+      </div>
+    </section>
+
+    <section class="payments">
+      <div class="section-header">
+        <h2>Upcoming Payments</h2>
+        <span id="paymentCount">0 payments</span>
+      </div>
+
+      <div id="paymentList" class="payment-list">
+        <p class="loading">Loading payments...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
